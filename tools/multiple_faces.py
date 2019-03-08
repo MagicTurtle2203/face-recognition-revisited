@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from pathlib import Path
 
-net = cv2.dnn.readNetFromCaffe(str(Path('./caffe/deploy.prototxt')), str(Path('./caffe/res10_300x300_ssd_iter_140000.caffemodel')))
+net = cv2.dnn.readNetFromCaffe(str(Path().resolve().parents[0] / Path('caffe/deploy.prototxt')), str(Path().resolve().parents[0] / Path('caffe/res10_300x300_ssd_iter_140000.caffemodel')))
 
 def detect_face(image):
     (h, w) = image.shape[:2]

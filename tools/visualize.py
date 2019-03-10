@@ -87,12 +87,10 @@ if __name__ == '__main__':
             try:
                 img_array = cv2.imread(str(p))
 
-                if img_array.shape[1] < img_array.shape[0] and img_array.shape[1] > SCREEN_HEIGHT//5*2:
-                    img_array = cv2.resize(img_array, (int(SCREEN_HEIGHT//5*2 * img_array.shape[1]/img_array.shape[0]), SCREEN_HEIGHT//5*2))
-                elif img_array.shape[0] < img_array.shape[1] and img_array.shape[0] > SCREEN_WIDTH//5*2:
+                if img_array.shape[1] < img_array.shape[0]:
+                    img_array = cv2.resize(img_array, (int(SCREEN_HEIGHT//2 * img_array.shape[1]/img_array.shape[0]), SCREEN_HEIGHT//2))
+                elif img_array.shape[0] < img_array.shape[1]:
                     img_array = cv2.resize(img_array, (SCREEN_WIDTH//5*2, int(SCREEN_WIDTH//5*2 * img_array.shape[0]/img_array.shape[1])))
-                else:
-                    img_array = cv2.resize(img_array, (600, int(600 * img_array.shape[0]/img_array.shape[1])))
                 
                 face, face_coords = detect_face(img_array)
 

@@ -31,7 +31,7 @@ def detect_face(image):
                 if w - x > (first[2] - first[0]) * 0.5 and h - y > (first[3] - first[1]) * 0.5:     
                     i_area = max(0, (min(w, first[2]) - max(x, first[0]))) * max(0, (min(h, first[3]) - max(y, first[1])))
 
-                    if i_area / ((first[2] - first[0]) * (first[3] - first[1])) < 0.1:
+                    if i_area / ((first[2] - first[0]) * (first[3] - first[1])) < 0.05:
                         detection_list.append((x, y, w, h))
                 
 

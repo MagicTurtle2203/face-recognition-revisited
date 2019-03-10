@@ -1,5 +1,5 @@
 # visualize.py
-#
+
 # goes through every image in a directory and attempts to find a face in each
 # if a face is found, the picture is shown briefly with a box around the detected face
 # if a face is not found, no picture is shown
@@ -79,7 +79,8 @@ if __name__ == '__main__':
         # set amount of time each picture is shown for
         WAIT_TIME = 300
         
-        # because my image files were named as "handong (1).jpg" and such, the key is used to go through the pictures in order
+        # because my image files were named as "handong (1).jpg" and such,
+        # the key is used to go through the pictures in order
         pic_dir = sorted(path.iterdir(),) # key=lambda x: int(re.search(r'(?<=\()\d+(?=\))', str(x))[0]))
 
         for p in pic_dir[min(START_FROM, len(pic_dir) - 1):]:

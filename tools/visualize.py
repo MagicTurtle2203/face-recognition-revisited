@@ -30,6 +30,12 @@ import numpy as np
 from pathlib import Path
 import re
 
+# set start here
+START_FROM = 0
+
+# set amount of time each picture is shown for (in ms)
+WAIT_TIME = 300
+
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
 
@@ -66,24 +72,16 @@ if __name__ == '__main__':
         path = Path(args.path)
     else:
         path = Path(input("path to image directory: "))
-    
-    picture_count = 0
 
     try:
         if args.start:
-            START_FROM = args.start
-        else:
-            # set start here
-            START_FROM = 0
-
-        # set amount of time each picture is shown for
-        WAIT_TIME = 300
+            START_FROM = args.start       
         
         # because my image files were named as "handong (1).jpg" and such,
         # the key is used to go through the pictures in order
-        pic_dir = sorted(path.iterdir(),) # key=lambda x: int(re.search(r'(?<=\()\d+(?=\))', str(x))[0]))
+        pic_dir = sorted(path.iterdir(), key=lambda x: int(re.search(r'(?<=\()\d+(?=\))', str(x))[0]))
 
-        for p in pic_dir[min(START_FROM, len(pic_dir) - 1):]:
+        for count, p in enumerate(pic_dir[min(START_FROM, len(pic_dir) - 1):]):
             print("working on:", p)
 
             try:
@@ -112,11 +110,11 @@ if __name__ == '__main__':
                         cv2.waitKey(WAIT_TIME)
                         cv2.destroyAllWindows()    
 
-                picture_count += 1
-
             except Exception as e:
                 print("unable to read image:", p)
 
     except KeyboardInterrupt:
-        print("processed", picture_count, "pictures")
+        print("processed", count, "pictures")
         raise
+
+    print("processed", count, "pictures")

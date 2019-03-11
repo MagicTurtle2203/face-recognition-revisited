@@ -39,7 +39,8 @@ WAIT_TIME = 300
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
 
-net = cv2.dnn.readNetFromCaffe(str(Path().resolve().parents[0] / Path('caffe/deploy.prototxt')), str(Path().resolve().parents[0] / Path('caffe/res10_300x300_ssd_iter_140000.caffemodel')))
+net = cv2.dnn.readNetFromCaffe(str(Path().resolve().parents[0] / Path('caffe/deploy.prototxt')),
+                               str(Path().resolve().parents[0] / Path('caffe/res10_300x300_ssd_iter_140000.caffemodel')))
 
 def detect_face(image):
     (h, w) = image.shape[:2]
@@ -79,32 +80,54 @@ if __name__ == '__main__':
         
         # because my image files were named as "handong (1).jpg" and such,
         # the key is used to go through the pictures in order
-        pic_dir = sorted(path.iterdir(), key=lambda x: int(re.search(r'(?<=\()\d+(?=\))', str(x))[0]))
+        pic_dir = sorted(path.iterdir(),
+                         key=lambda x: int(re.search(r'(?<=\()\d+(?=\))', str(x))[0]))
 
         for count, p in enumerate(pic_dir[min(START_FROM, len(pic_dir) - 1):]):
             print("working on:", p)
 
             try:
-                img_array = cv2.imread(str(p))
+                img = cv2.imread(str(p))
 
-                if img_array.shape[1] < img_array.shape[0]:
-                    img_array = cv2.resize(img_array, (int(SCREEN_HEIGHT//2 * img_array.shape[1]/img_array.shape[0]), SCREEN_HEIGHT//2))
-                elif img_array.shape[0] < img_array.shape[1]:
-                    img_array = cv2.resize(img_array, (SCREEN_WIDTH//5*2, int(SCREEN_WIDTH//5*2 * img_array.shape[0]/img_array.shape[1])))
+                if img.shape[1] < img.shape[0]:
+                    img = cv2.resize(img, (int(SCREEN_HEIGHT//2 * img.shape[1]/img.shape[0]),
+                                           SCREEN_HEIGHT//2))
+                elif img.shape[0] < img.shape[1]:
+                    img = cv2.resize(img, (SCREEN_WIDTH//5*2,
+                                           int(SCREEN_WIDTH//5*2 * img.shape[0]/img.shape[1])))
+
+                if img.shape[1] < img.shape[0]:
+                    x_shift = img.shape[1]//10
+                    y_shift = 0
+                    cut_img = img[0:img.shape[0]*3//5, x_shift:x_shift*9]
+                else:
+                    x_shift = img.shape[1]//8
+                    y_shift = img.shape[0]//10
+                    cut_img = img[y_shift:y_shift*9, x_shift:x_shift*7]
                 
-                face, face_coords = detect_face(img_array)
+                face, face_coords = detect_face(cut_img)
+                cut = True
+
+                if face is None:
+                    face, face_coords = detect_face(img)
+                    cut = False
 
                 if not args.faceonly:
                     if face_coords is not None:
                         (x, y, w, h) = face_coords
-                        cv2.rectangle(img_array, (x, y), (w, h), (255, 0, 0), 2)
+
+                        if cut is True:
+                            x, w = x+x_shift, w+x_shift
+                            y, h = y+y_shift, h+y_shift
                         
-                        cv2.imshow(p.name, img_array)
+                        cv2.rectangle(img, (x, y), (w, h), (255, 0, 0), 2)
+                        
+                        cv2.imshow(p.name, img)
                         cv2.waitKey(WAIT_TIME)
                         cv2.destroyAllWindows()
                 else:
                     if face is not None:
-                        cv2.imshow(p.name, cv2.cvtColor(face, cv2.COLOR_BGR2RGB))
+                        cv2.imshow(p.name, face)
                         cv2.waitKey(WAIT_TIME)
                         cv2.destroyAllWindows()    
 

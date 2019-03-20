@@ -7,7 +7,8 @@
 # this is to see what will be fed into the model during training and
 # lets us delete an image if the face detector detects the wrong face
 #
-# use ctrl-c when a false detection is spotted to end the program and then delete 
+# pause the command line or use ctrl-c to stop the program
+# when a false detection is spotted and then delete the picture
 #
 # when running from the command line, optional parameters are:
 #
@@ -19,16 +20,12 @@
 ## using ctrl-c will also show how many pictures were gone through in a session
 ## so that the user can add that number to their previous start value
 ## can be modified directly in the code, default is 0
-#
-# -f/--faceonly [True/False]
-## instead of showing entire image with a box drawn around the detected face
-## only the detected face will be shown
 
 import argparse
 import cv2
 import numpy as np
-from pathlib import Path
 import re
+from pathlib import Path
 
 # set start here
 START_FROM = 0
@@ -36,6 +33,7 @@ START_FROM = 0
 # set amount of time each picture is shown for (in ms)
 WAIT_TIME = 300
 
+# change for screen resolution in order to make all pictures fit the screen
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
 
@@ -58,15 +56,14 @@ def detect_face(image):
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
             (x, y, w, h) = box.astype("int")
             
-            return image[y:h, x:w], (x, y, w, h)
+            return (x, y, w, h)
         
-        return None, None
+        return None
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("-p", "--path", help="path to image directory")
     ap.add_argument("-s", "--start", type=int, help="image number to start from")
-    ap.add_argument("-f", "--faceonly", type=bool, help="show face only")
     args = ap.parse_args()
 
     if args.path:
@@ -83,53 +80,55 @@ if __name__ == '__main__':
         pic_dir = sorted(path.iterdir(),
                          key=lambda x: int(re.search(r'(?<=\()\d+(?=\))', str(x))[0]))
 
-        for count, p in enumerate(pic_dir[min(START_FROM, len(pic_dir) - 1):]):
+        count = 0
+        
+        for p in pic_dir[min(START_FROM, len(pic_dir) - 1):]:
             print("working on:", p)
 
             try:
                 img = cv2.imread(str(p))
 
-                if img.shape[1] < img.shape[0]:
+                if img.shape[1] <= img.shape[0]:
                     img = cv2.resize(img, (int(SCREEN_HEIGHT//2 * img.shape[1]/img.shape[0]),
                                            SCREEN_HEIGHT//2))
-                elif img.shape[0] < img.shape[1]:
+                else:
                     img = cv2.resize(img, (SCREEN_WIDTH//5*2,
                                            int(SCREEN_WIDTH//5*2 * img.shape[0]/img.shape[1])))
 
-                if img.shape[1] < img.shape[0]:
-                    x_shift = img.shape[1]//10
-                    y_shift = 0
-                    cut_img = img[0:img.shape[0]*3//5, x_shift:x_shift*9]
-                else:
+                if img.shape[1] <= img.shape[0]:
                     x_shift = img.shape[1]//8
-                    y_shift = img.shape[0]//10
-                    cut_img = img[y_shift:y_shift*9, x_shift:x_shift*7]
-                
-                face, face_coords = detect_face(cut_img)
-                cut = True
-
-                if face is None:
-                    face, face_coords = detect_face(img)
-                    cut = False
-
-                if not args.faceonly:
-                    if face_coords is not None:
-                        (x, y, w, h) = face_coords
-
-                        if cut is True:
-                            x, w = x+x_shift, w+x_shift
-                            y, h = y+y_shift, h+y_shift
-                        
-                        cv2.rectangle(img, (x, y), (w, h), (255, 0, 0), 2)
-                        
-                        cv2.imshow(p.name, img)
-                        cv2.waitKey(WAIT_TIME)
-                        cv2.destroyAllWindows()
+                    y_shift = 0
+                    cut_img = img[0:img.shape[0]*4//5, x_shift:x_shift*7]
                 else:
-                    if face is not None:
-                        cv2.imshow(p.name, face)
-                        cv2.waitKey(WAIT_TIME)
-                        cv2.destroyAllWindows()    
+                    x_shift = img.shape[1]//7
+                    y_shift = img.shape[0]//10
+                    cut_img = img[y_shift:y_shift*9, x_shift:x_shift*6]
+                
+                cut_coords = detect_face(cut_img)
+                
+                if cut_coords is not None:
+                    cut_x, cut_y, cut_w, cut_h = cut_coords
+                    cut_x, cut_w = cut_x+x_shift, cut_w+x_shift
+                    cut_y, cut_h = cut_y+y_shift, cut_h+y_shift
+
+                if (cut_x <= 0
+                    or cut_y <= 0
+                    or cut_w >= img.shape[1]
+                    or cut_h >= img.shape[0]):
+                    coords = detect_face(img)
+                else:
+                    coords = (cut_x, cut_y, cut_w, cut_h)
+
+                if coords is not None:
+                    (x, y, w, h) = coords
+                        
+                    cv2.rectangle(img, (x, y), (w, h), (255, 0, 0), 2)
+                    
+                    cv2.imshow(p.name, img)
+                    cv2.waitKey(WAIT_TIME)
+                    cv2.destroyAllWindows()
+
+                count += 1
 
             except Exception as e:
                 print("unable to read image:", p)

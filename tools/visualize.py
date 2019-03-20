@@ -111,7 +111,8 @@ if __name__ == '__main__':
                     cut_x, cut_w = cut_x+x_shift, cut_w+x_shift
                     cut_y, cut_h = cut_y+y_shift, cut_h+y_shift
 
-                if (cut_x <= 0
+                if (cut_coords is None
+                    or cut_x <= 0
                     or cut_y <= 0
                     or cut_w >= img.shape[1]
                     or cut_h >= img.shape[0]):

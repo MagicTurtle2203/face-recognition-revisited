@@ -51,14 +51,15 @@ def detect_face(image):
 
         confidence = detections[0, 0, i, 2]
 
-        if confidence > 0.6:
+        if confidence > 0.65:
 
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
             (x, y, w, h) = box.astype("int")
             
             return (x, y, w, h)
         
-        return None
+    return None
+    
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
@@ -96,13 +97,13 @@ if __name__ == '__main__':
                                            int(SCREEN_WIDTH//5*2 * img.shape[0]/img.shape[1])))
 
                 if img.shape[1] <= img.shape[0]:
-                    x_shift = img.shape[1]//8
+                    x_shift = img.shape[1]//6
                     y_shift = 0
-                    cut_img = img[0:img.shape[0]*4//5, x_shift:x_shift*7]
+                    cut_img = img[0:int(img.shape[0] * 2/3), x_shift:x_shift*5]
                 else:
-                    x_shift = img.shape[1]//7
+                    x_shift = img.shape[1]//5
                     y_shift = img.shape[0]//10
-                    cut_img = img[y_shift:y_shift*9, x_shift:x_shift*6]
+                    cut_img = img[y_shift:y_shift*9, x_shift:x_shift*4]
                 
                 cut_coords = detect_face(cut_img)
                 
@@ -117,8 +118,10 @@ if __name__ == '__main__':
                     or cut_w >= img.shape[1]
                     or cut_h >= img.shape[0]):
                     coords = detect_face(img)
+                    print('used original')
                 else:
                     coords = (cut_x, cut_y, cut_w, cut_h)
+                    print('used cut')
 
                 if coords is not None:
                     (x, y, w, h) = coords

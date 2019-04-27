@@ -59,7 +59,7 @@ def distance_x(center_1: tuple, center_2: tuple) -> float:
     return abs(center_1[0] - center_2[0])
 
 
-def detect_face(image):
+def detect_face(image) -> tuple:
     height, width = image.shape[:2]
     blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
 
@@ -87,8 +87,13 @@ def detect_face(image):
     #         f"distance from center y-axis: {distance_x(get_center(detection), get_center((0, 0, width, height)))}\n"
     #         f"distance from center: {distance(get_center(detection), get_center((0, 0, width, height)))}\n"
     #         f"confidence: {confidence}\n")
-        
-    return min(detections_set, key=lambda x: (distance_x(get_center(x[1]), get_center((0, 0, width, height))), -x[0]))[1]
+    
+    try:
+        output = min(detections_set, key=lambda x: (distance_x(get_center(x[1]), get_center((0, 0, width, height))), -x[0]))[1]
+    except ValueError:
+        return None
+    else:
+        return output
     
 
 if __name__ == '__main__':

@@ -23,6 +23,7 @@
 
 import argparse
 import cv2
+import math
 import numpy as np
 import re
 from pathlib import Path
@@ -37,15 +38,35 @@ WAIT_TIME = 300
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
 
+
 net = cv2.dnn.readNetFromCaffe(str(Path().resolve().parents[0] / Path('caffe/deploy.prototxt')),
                                str(Path().resolve().parents[0] / Path('caffe/res10_300x300_ssd_iter_140000.caffemodel')))
 
+
+def get_center(size: tuple) -> tuple:
+    x, y, w, h = size
+    center_x = (w + x) // 2
+    center_y = (h + y) // 2
+    return center_x, center_y
+
+
+def distance(center_1: tuple, center_2: tuple) -> float:
+    return math.sqrt(math.pow(center_1[0] - center_2[0], 2) +
+                     math.pow(center_1[1] - center_2[1], 2))
+
+
+def distance_x(center_1: tuple, center_2: tuple) -> float:
+    return abs(center_1[0] - center_2[0])
+
+
 def detect_face(image):
-    (h, w) = image.shape[:2]
+    height, width = image.shape[:2]
     blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
 
     net.setInput(blob)
     detections = net.forward()
+
+    detections_set = set()
 
     for i in range(detections.shape[2]):
 
@@ -53,12 +74,21 @@ def detect_face(image):
 
         if confidence > 0.65:
 
-            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-            (x, y, w, h) = box.astype("int")
+            box = detections[0, 0, i, 3:7] * np.array([width, height, width, height])
+            x, y, w, h = box.astype("int")
             
-            return (x, y, w, h)
+            detections_set.add((confidence, (x, y, w, h)))
+    
+    # DEBUGGING
+
+    # for confidence, detection in detections_set:
+    #     print(f"center of image: {get_center((0, 0, width, height))}\n"
+    #         f"shape: {detection}\n"
+    #         f"distance from center y-axis: {distance_x(get_center(detection), get_center((0, 0, width, height)))}\n"
+    #         f"distance from center: {distance(get_center(detection), get_center((0, 0, width, height)))}\n"
+    #         f"confidence: {confidence}\n")
         
-    return None
+    return min(detections_set, key=lambda x: (distance_x(get_center(x[1]), get_center((0, 0, width, height))), -x[0]))[1]
     
 
 if __name__ == '__main__':
@@ -96,32 +126,7 @@ if __name__ == '__main__':
                     img = cv2.resize(img, (SCREEN_WIDTH//5*2,
                                            int(SCREEN_WIDTH//5*2 * img.shape[0]/img.shape[1])))
 
-                if img.shape[1] <= img.shape[0]:
-                    x_shift = img.shape[1]//6
-                    y_shift = 0
-                    cut_img = img[0:int(img.shape[0] * 2/3), x_shift:x_shift*5]
-                else:
-                    x_shift = img.shape[1]//5
-                    y_shift = img.shape[0]//10
-                    cut_img = img[y_shift:y_shift*9, x_shift:x_shift*4]
-                
-                cut_coords = detect_face(cut_img)
-                
-                if cut_coords is not None:
-                    cut_x, cut_y, cut_w, cut_h = cut_coords
-                    cut_x, cut_w = cut_x+x_shift, cut_w+x_shift
-                    cut_y, cut_h = cut_y+y_shift, cut_h+y_shift
-
-                if (cut_coords is None
-                    or cut_x <= 0
-                    or cut_y <= 0
-                    or cut_w >= img.shape[1]
-                    or cut_h >= img.shape[0]):
-                    coords = detect_face(img)
-                    print('used original')
-                else:
-                    coords = (cut_x, cut_y, cut_w, cut_h)
-                    print('used cut')
+                coords = detect_face(img)
 
                 if coords is not None:
                     (x, y, w, h) = coords
@@ -129,12 +134,15 @@ if __name__ == '__main__':
                     cv2.rectangle(img, (x, y), (w, h), (255, 0, 0), 2)
                     
                     cv2.imshow(p.name, img)
-                    cv2.waitKey(WAIT_TIME)
+                    if cv2.waitKey(WAIT_TIME) & 0xFF == ord("q"):
+                        cv2.destroyAllWindows()
+                        break
                     cv2.destroyAllWindows()
 
                 count += 1
 
             except Exception as e:
+                print(e)
                 print("unable to read image:", p)
 
     except KeyboardInterrupt:

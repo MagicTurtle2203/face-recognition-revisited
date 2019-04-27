@@ -29,7 +29,6 @@
 
 import argparse
 import cv2
-import math
 import numpy as np
 import re
 from pathlib import Path
@@ -57,11 +56,6 @@ def get_center(size: tuple) -> tuple:
     center_x = (w + x) // 2
     center_y = (h + y) // 2
     return center_x, center_y
-
-
-def distance(center_1: tuple, center_2: tuple) -> float:
-    return math.sqrt(math.pow(center_1[0] - center_2[0], 2) +
-                     math.pow(center_1[1] - center_2[1], 2))
 
 
 def distance_x(center_1: tuple, center_2: tuple) -> float:
@@ -176,12 +170,6 @@ if __name__ == '__main__':
 
                     if detections:
                         img = debug_draw_rects(img, detections)
-                        
-                        cv2.imshow(p.name, img)
-                        if cv2.waitKey(WAIT_TIME) & 0xFF == ord("q"):
-                            cv2.destroyAllWindows()
-                            break
-                        cv2.destroyAllWindows()
 
                 else:
                     coords = detect_face(img)
@@ -191,11 +179,11 @@ if __name__ == '__main__':
                             
                         cv2.rectangle(img, (x, y), (w, h), (255, 0, 0), 2)
                         
-                        cv2.imshow(p.name, img)
-                        if cv2.waitKey(WAIT_TIME) & 0xFF == ord("q"):
-                            cv2.destroyAllWindows()
-                            break
-                        cv2.destroyAllWindows()
+                cv2.imshow(p.name, img)
+                if cv2.waitKey(WAIT_TIME) & 0xFF == ord("q"):
+                    cv2.destroyAllWindows()
+                    break
+                cv2.destroyAllWindows()
 
                 count += 1
 

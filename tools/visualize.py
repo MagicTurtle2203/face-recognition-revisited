@@ -81,18 +81,23 @@ def detect_face(image) -> tuple:
     
     # DEBUGGING
 
-    # for confidence, detection in detections_set:
-    #     print(f"center of image: {get_center((0, 0, width, height))}\n"
-    #         f"shape: {detection}\n"
-    #         f"distance from center y-axis: {distance_x(get_center(detection), get_center((0, 0, width, height)))}\n"
-    #         f"distance from center: {distance(get_center(detection), get_center((0, 0, width, height)))}\n"
-    #         f"confidence: {confidence}\n")
+    for confidence, detection in detections_set:
+        print(f"center of image: {get_center((0, 0, width, height))}\n"
+            f"shape: {detection}\n"
+            f"distance from center y-axis: {distance_x(get_center(detection), get_center((0, 0, width, height)))}\n"
+            f"distance from center: {distance(get_center(detection), get_center((0, 0, width, height)))}\n"
+            f"confidence: {confidence}\n")
     
     try:
-        output = min(detections_set, key=lambda x: (distance_x(get_center(x[1]), get_center((0, 0, width, height))), -x[0]))[1]
+        max_confidence = max(detections_set, key=lambda x: x[0])
+        min_distance = min(detections_set, key=lambda x: distance_x(get_center(x[1]), get_center((0, 0, width, height))))
     except ValueError:
         return None
     else:
+        if max_confidence[0] - 0.10 > min_distance[0]:
+            output = max_confidence[1]
+        else:
+            output = min_distance[1]
         return output
     
 
@@ -139,7 +144,7 @@ if __name__ == '__main__':
                     cv2.rectangle(img, (x, y), (w, h), (255, 0, 0), 2)
                     
                     cv2.imshow(p.name, img)
-                    if cv2.waitKey(WAIT_TIME) & 0xFF == ord("q"):
+                    if cv2.waitKey(0) & 0xFF == ord("q"):
                         cv2.destroyAllWindows()
                         break
                     cv2.destroyAllWindows()

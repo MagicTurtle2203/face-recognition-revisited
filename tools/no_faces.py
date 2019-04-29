@@ -17,7 +17,7 @@ def detect_face(image):
 
         confidence = detections[0, 0, i, 2]
 
-        if confidence > 0.6:
+        if confidence > 0.65:
 
             return True
         

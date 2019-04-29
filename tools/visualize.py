@@ -7,7 +7,7 @@
 # this is to see what will be fed into the model during training and
 # lets us delete an image if the face detector detects the wrong face
 #
-# pause the command line or use ctrl-c to stop the program
+# pause the command line or use ctrl-c or "q" to stop the program
 # when a false detection is spotted and then delete the picture
 #
 # when running from the command line, optional parameters are:
@@ -83,6 +83,7 @@ def detect_face(image, debug: bool = False) -> tuple:
             detections_set.add((confidence, (x, y, w, h)))
 
     if debug:
+        print(f"found {len(detections_set)} faces\n")
         return detections_set
     
     try:
@@ -111,19 +112,20 @@ def debug_draw_rects(image, detections) -> "image":
         output = min_distance[1]
 
     for confidence, detection in detections:
-        print(f"center of image: {get_center((0, 0, width, height))}\n"
-            f"detection shape: {detection}\n"
-            f"distance from center y-axis: {distance_x(get_center(detection), get_center((0, 0, width, height)))}\n"
-            f"confidence: {confidence}\n")
-
         x, y, w, h = detection
 
         if detection == output:
             cv2.rectangle(image, (x, y), (w, h), (0, 0, 255), 2)
             cv2.putText(image, f"{confidence*100:.2f}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (0, 0, 255), 2)
+            print("**Chosen**")
         else:
             cv2.rectangle(image, (x, y), (w, h), (255, 0, 0), 2)
-            cv2.putText(image, f"{confidence*100:.2f}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (255, 0, 0), 2)     
+            cv2.putText(image, f"{confidence*100:.2f}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (255, 0, 0), 2)  
+
+        print(f"center of image: {get_center((0, 0, width, height))}\n"
+            f"detection shape: {detection}\n"
+            f"distance from center y-axis: {distance_x(get_center(detection), get_center((0, 0, width, height)))}\n"
+            f"confidence: {confidence}\n")   
     
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return image

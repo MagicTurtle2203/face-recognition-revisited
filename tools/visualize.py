@@ -92,7 +92,7 @@ def detect_face(image, debug: bool = False) -> tuple:
     except ValueError:
         return None
     else:
-        if max_confidence[0] - 0.10 > min_distance[0]:
+        if max_confidence[0] - 0.20 > min_distance[0]:
             output = max_confidence[1]
         else:
             output = min_distance[1]
@@ -106,7 +106,7 @@ def debug_draw_rects(image, detections) -> "image":
     max_confidence = max(detections, key=lambda x: x[0])
     min_distance = min(detections, key=lambda x: distance_x(get_center(x[1]), get_center((0, 0, width, height))))
 
-    if max_confidence[0] - 0.10 > min_distance[0]:
+    if max_confidence[0] - 0.20 > min_distance[0]:
         output = max_confidence[1]
     else:
         output = min_distance[1]
